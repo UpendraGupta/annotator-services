@@ -173,10 +173,10 @@ public class FileController {
     }
     
     @PostMapping("/save")
-    public UploadFileResponse save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json) throws IOException {
+    public UploadFileResponse save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json) throws Exception {
         String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE);
         String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE);
-        fileStorageService.generateCSV(annotatedFileName, jsonFileName);
+        fileStorageService.generateCSV(annotatedFileName, jsonFileName, "data-annotate:(\\d{6})");
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
