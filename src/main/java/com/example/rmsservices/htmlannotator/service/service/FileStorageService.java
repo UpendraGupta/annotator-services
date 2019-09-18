@@ -3,6 +3,9 @@ package com.example.rmsservices.htmlannotator.service.service;
 import com.example.rmsservices.htmlannotator.service.exception.FileStorageException;
 import com.example.rmsservices.htmlannotator.service.exception.MyFileNotFoundException;
 import com.example.rmsservices.htmlannotator.service.property.FileStorageProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -70,13 +73,15 @@ public class FileStorageService {
 
             // Copy file to the target location (Replacing existing file with the same name)
             Path targetLocation = null;
-            
+            ArrayList<String> fileNames = null;
             switch(type) {
                 case TYPE_MAIN_FILE : 
-                    targetLocation = this.fileStorageLocation.resolve(fileName);
+                    fileNames = getList();
+                    targetLocation = this.fileStorageLocation.resolve(fileNames.size() + "_" + fileName).normalize();
                     break;
                 case TYPE_ANNOTATED_FILE :
-                    targetLocation = this.annotatedFileStorageLocation.resolve(fileName);
+                    fileNames = getList();
+                    targetLocation = this.annotatedFileStorageLocation.resolve(fileNames.size() + "_" + fileName).normalize();
                     break;
                 case TYPE_JSON_FILE :
                     targetLocation = this.jsonFileStorageLocation.resolve(fileName);
@@ -100,12 +105,11 @@ public class FileStorageService {
             ArrayList<String> fileNames = null;
             switch(type) {
                 case TYPE_MAIN_FILE : 
-                    fileNames = getList();
-                    filePath = this.fileStorageLocation.resolve(fileNames.size() + "_" + fileName).normalize();
+                    
+                    filePath = this.fileStorageLocation.resolve(fileName);
                     break;
                 case TYPE_ANNOTATED_FILE :
-                    fileNames = getList();
-                    filePath = this.annotatedFileStorageLocation.resolve(fileNames.size() + "_" + fileName).normalize();
+                    filePath = this.annotatedFileStorageLocation.resolve(fileName);
                     break;
                 case TYPE_JSON_FILE :
                     filePath = this.jsonFileStorageLocation.resolve(fileName).normalize();
@@ -150,7 +154,7 @@ public class FileStorageService {
           String jsonData = jsonlines.collect(Collectors.joining("\n"));
           jsonlines.close();
           jsonData = jsonData.trim();
-          String csvData = convertJSONToCSV(jsonData);
+          String csvData = convertJSONToCSV(jsonFileName);
           
           String mainData = cleanAnnotatedData(annotatedData, "");
         
@@ -161,8 +165,8 @@ public class FileStorageService {
         return null;
     }
 
-    private String convertJSONToCSV(String jsonData) {
-        // TODO Auto-generated method stub
+    private String convertJSONToCSV(String jsonFileName) throws JsonProcessingException, IOException {
+        JsonNode jsonTree = new ObjectMapper().readTree(new File((this.jsonFileStorageLocation.resolve(jsonFileName)).toString()));
         return null;
     }
     
