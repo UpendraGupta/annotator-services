@@ -36,8 +36,9 @@ public class FileController {
 
     @PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
-        String fileName = fileStorageService.storeFile(file, FileStorageService.TYPE_MAIN_FILE);
-
+        
+        String fileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE);
+        fileStorageService.storeFile(file, FileStorageService.TYPE_MAIN_FILE);
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
                 .path(fileName)
@@ -79,8 +80,8 @@ public class FileController {
                 .body(resource);
     }
     
-    @GetMapping("/downloadFiles/{fileNames:.+}")
-    public void downloadFiles(@PathVariable List<String> fileNames, HttpServletResponse response) {
+    @GetMapping("/downloadFiles")
+    public void downloadFiles(@RequestParam("fileNames") List<String> fileNames, HttpServletResponse response) {
         response.setContentType("application/octet-stream");
         response.setHeader("Content-Disposition", "attachment;filename=download.zip");
         response.setStatus(HttpServletResponse.SC_OK);
@@ -130,8 +131,8 @@ public class FileController {
                 .body(resource);
     }
     
-    @GetMapping("/downloadCSVs/{fileNames:.+}")
-    public void downloadCSVs(@PathVariable List<String> fileNames, HttpServletResponse response) {
+    @GetMapping("/downloadCSVs")
+    public void downloadCSVs(@RequestParam("fileNames") List<String> fileNames, HttpServletResponse response) {
         response.setContentType("application/octet-stream");
         response.setHeader("Content-Disposition", "attachment;filename=download.zip");
         response.setStatus(HttpServletResponse.SC_OK);
@@ -189,7 +190,7 @@ public class FileController {
                 file.getContentType(), file.getSize());
     }
     
-    @GetMapping("/getfile/{fileName:.+}")
+    @GetMapping("/getFile/{fileName:.+}")
     public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
 
@@ -212,7 +213,7 @@ public class FileController {
                 .body(resource);
     }
 
-    @GetMapping("/getjson/{fileName:.+}")
+    @GetMapping("/getJson/{fileName:.+}")
     public ResponseEntity<Resource> getJSON(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_JSON_FILE);
 

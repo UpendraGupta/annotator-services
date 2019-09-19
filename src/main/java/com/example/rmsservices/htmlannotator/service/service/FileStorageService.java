@@ -99,13 +99,15 @@ public class FileStorageService {
             switch (type) {
                 case TYPE_MAIN_FILE:
                     fileNames = getList();
+                    fileName = fileNames.size() + "_" + fileName;
                     targetLocation = this.fileStorageLocation
-                                    .resolve(fileNames.size() + "_" + fileName).normalize();
+                                    .resolve(fileName).normalize();
                     break;
                 case TYPE_ANNOTATED_FILE:
                     fileNames = getList();
+                    fileName = fileNames.size() + "_" + fileName;
                     targetLocation = this.annotatedFileStorageLocation
-                                    .resolve(fileNames.size() + "_" + fileName).normalize();
+                                    .resolve(fileName).normalize();
                     break;
                 case TYPE_JSON_FILE:
                     targetLocation = this.jsonFileStorageLocation.resolve(fileName);
@@ -131,10 +133,10 @@ public class FileStorageService {
             switch (type) {
                 case TYPE_MAIN_FILE:
 
-                    filePath = this.fileStorageLocation.resolve(fileName);
+                    filePath = this.fileStorageLocation.resolve(fileName).normalize();
                     break;
                 case TYPE_ANNOTATED_FILE:
-                    filePath = this.annotatedFileStorageLocation.resolve(fileName);
+                    filePath = this.annotatedFileStorageLocation.resolve(fileName).normalize();
                     break;
                 case TYPE_JSON_FILE:
                     filePath = this.jsonFileStorageLocation.resolve(fileName).normalize();
