@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
@@ -18,7 +19,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -47,11 +50,11 @@ public class FileController {
     }
 
     @PostMapping("/uploadMultipleFiles")
-    public List<UploadFileResponse> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files) {
-        return Arrays.asList(files)
-                .stream()
-                .map(file -> uploadFile(file))
-                .collect(Collectors.toList());
+    public ResponseEntity<List<UploadFileResponse>> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files) {
+        return new ResponseEntity<List<UploadFileResponse>>(Arrays.asList(files)
+                        .stream()
+                        .map(file -> uploadFile(file))
+                        .collect(Collectors.toList()), HttpStatus.CREATED);
     }
 
     @GetMapping("/downloadFile/{fileName:.+}")
@@ -158,21 +161,23 @@ public class FileController {
     }
     
     @GetMapping("/list")
-    public List<String> getList() {
+    public ResponseEntity<ArrayList<String>> getList() {
         
         try {
             
-            return fileStorageService.getList();
+            ArrayList<String> fileNames = (ArrayList<String>)fileStorageService.getList();
+            Collections.sort(fileNames, Collections.reverseOrder());
+            return new ResponseEntity<ArrayList<String>>(fileNames, HttpStatus.OK); 
            
         } catch (Exception e) {
-            // Exception handling goes here
+            logger.error("No Data Found while fetching list");
         }
-        return null;
+        return new ResponseEntity<ArrayList<String>>((ArrayList<String>)Collections.EMPTY_LIST, HttpStatus.OK);
 
     }
     
     @PostMapping("/save")
-    public UploadFileResponse save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
+    public ResponseEntity<UploadFileResponse> save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
         String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, true);
         String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
         // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
@@ -183,9 +188,10 @@ public class FileController {
                 .path("/downloadFile/")
                 .path(annotatedFileName)
                 .toUriString();
-
-        return new UploadFileResponse(annotatedFileName, fileDownloadUri,
-                file.getContentType(), file.getSize());
+        
+        return new ResponseEntity<UploadFileResponse>(new UploadFileResponse(annotatedFileName, fileDownloadUri,
+                        file.getContentType(), file.getSize()), HttpStatus.OK);
+        
     }
     
 //    @GetMapping("/getFile/{fileName:.+}")

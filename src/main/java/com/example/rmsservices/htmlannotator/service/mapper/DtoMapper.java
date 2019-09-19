@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsForCSV;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsFromJSON;
-import com.example.rmsservices.htmlannotator.service.service.FileStorageService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,7 +26,7 @@ public class DtoMapper {
     
     private static final Logger logger = LoggerFactory.getLogger(DtoMapper.class);
     
-    public AnnotationDetailsForCSV getAnnotationDetailsForCSV(AnnotationDetailsFromJSON annotationDetailsFromJSON, String fileName, String user, Integer diffStart, Integer diffEnd) throws Exception {
+    public AnnotationDetailsForCSV getAnnotationDetailsForCSV(AnnotationDetailsFromJSON annotationDetailsFromJSON, String fileName, String user, Integer diffStart, Integer diffEnd) {
 
         final AnnotationDetailsForCSV annotationDetailsForCSV = modelMapper.map(annotationDetailsFromJSON, AnnotationDetailsForCSV.class);
         annotationDetailsForCSV.setPosition((annotationDetailsFromJSON.getStart() - diffStart) + "-" + (annotationDetailsFromJSON.getEnd() - diffEnd));
@@ -40,11 +39,11 @@ public class DtoMapper {
         
         try {
             
-            Map<String, AnnotationDetailsFromJSON> data = objectMapper.readValue(new File(
+            return objectMapper.readValue(new File(
                             jsonFilePath), new TypeReference<Map<String, AnnotationDetailsFromJSON>>() {
                     });
          
-            return data;
+            
         } catch (IOException ex) {
             logger.error("Error occurred in getAnnotationDetailsMapFromJSON at " + jsonFilePath, ex);
         }

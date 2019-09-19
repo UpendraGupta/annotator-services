@@ -100,14 +100,15 @@ public class FileStorageService {
                 case TYPE_ANNOTATED_FILE:
                     fileNames = (ArrayList<String>) getList();
                     if(isAnnotated) {
-                        fileName = fileNames.size() + "_" + fileName + "_annotated";
                         File oldFile = new File(this.annotatedFileStorageLocation
                                         .resolve(fileName).normalize().toString()); 
                         
                         if(oldFile.delete()){ 
                             logger.info("File : " + this.annotatedFileStorageLocation
                                             .resolve(fileName).normalize().toString() + " deleted successfully"); 
-                        } 
+                        }
+                        fileName = "annotated" + "_" + fileNames.size() + "_" + fileName;
+                        
                     } else {
                         fileName = fileNames.size() + "_" + fileName;
                     }
@@ -168,14 +169,13 @@ public class FileStorageService {
     }
 
     public List<String> getList() {
-        ArrayList<String> fileNames = new ArrayList<String>();
+        ArrayList<String> fileNames = new ArrayList<>();
 
         final File folder = new File(annotatedFileStorageLocation.toString());
         for (final File fileEntry : folder.listFiles()) {
             fileNames.add(fileEntry.getName());
-            System.out.println(fileEntry.getName());
-
         }
+        logger.info(fileNames.toString());
         return fileNames;
     }
 
@@ -188,15 +188,15 @@ public class FileStorageService {
         annotatedlines.close();
         annotatedData = annotatedData.trim();
 
-        Stream<String> jsonlines = Files.lines(jsonFilePath);
-        String jsonData = jsonlines.collect(Collectors.joining("\n"));
-        jsonlines.close();
-        jsonData = jsonData.trim();
+//        Stream<String> jsonlines = Files.lines(jsonFilePath);
+//        String jsonData = jsonlines.collect(Collectors.joining("\n"));
+//        jsonlines.close();
+//        jsonData = jsonData.trim();
         //String csvData = convertJSONToCSV(jsonFileName);
         Map<String, AnnotationDetailsFromJSON> annotationDetails = DtoMapper.getAnnotationDetailsMapFromJSON(jsonFilePath.toString());
         
         updateAnnotationDetailsForCSV(annotatedData, new ArrayList<AnnotationDetailsFromJSON>(annotationDetails.values()), regExpToBeRemoved, replaceWithPattern(annotatedFileName, ".html", ""));
-        //String mainData = cleanAnnotatedData(annotatedData, "");
+        
 
     }
 
@@ -207,40 +207,46 @@ public class FileStorageService {
         Integer diffStart = 0;
         Integer diffEnd = 0;
         ArrayList<AnnotationDetailsForCSV> annotationDetailsForCSVs = new ArrayList<>();
-        for(AnnotationDetailsFromJSON annotationDetail: annotationDetails) {
-            String expectedValue = annotationDetail.getValue();
-            //String[] positions = annotationDetail.getPosition().split("-");
-            Integer startIndex = annotationDetail.getStart();
-            Integer endIndex = annotationDetail.getEnd();
-            String actualValue = annotatedData.substring(startIndex, endIndex+1);
-            
-            if(expectedValue.equals(actualValue)) {
-                String subAnnotatedData = annotatedData.substring(0, startIndex);
-                matcher = pattern.matcher(subAnnotatedData);
-                ArrayList<String> matches = new ArrayList<>();
-                while (matcher.find()) {
-                    matches.add(matcher.group(0));
+        try {
+            for(AnnotationDetailsFromJSON annotationDetail: annotationDetails) {
+                String expectedValue = annotationDetail.getValue();
+                //String[] positions = annotationDetail.getPosition().split("-");
+                Integer startIndex = annotationDetail.getStart();
+                Integer endIndex = annotationDetail.getEnd();
+                String actualValue = annotatedData.substring(startIndex, endIndex+1);
+                
+                if(expectedValue.equals(actualValue)) {
+                    String subAnnotatedData = annotatedData.substring(0, startIndex);
+                    matcher = pattern.matcher(subAnnotatedData);
+                    ArrayList<String> matches = new ArrayList<>();
+                    while (matcher.find()) {
+                        matches.add(matcher.group(0));
+                    }
+                    diffStart = String.join("", matches).length();
+                    
+                    matcher = pattern.matcher(expectedValue);
+                    while (matcher.find()) {
+                        matches.add(matcher.group(0));
+                    }
+                    diffEnd = String.join("", matches).length();
+                    annotationDetailsForCSVs.add(dtoMapper.getAnnotationDetailsForCSV(annotationDetail, fileName, "User_1", diffStart, diffEnd));
+                    
+                    
+                } else {
+                    String msg = annotationDetail.getValue() + " is not found at : " + startIndex + "-" + endIndex + ",  and the found value is : " + actualValue;
+                    throw new Exception(msg);
+                    
                 }
-                diffStart = String.join("", matches).length();
                 
-                matcher = pattern.matcher(expectedValue);
-                while (matcher.find()) {
-                    matches.add(matcher.group(0));
-                }
-                diffEnd = String.join("", matches).length();
-                annotationDetailsForCSVs.add(dtoMapper.getAnnotationDetailsForCSV(annotationDetail, fileName, "User_1", diffStart, diffEnd));
-                
-                
-            } else {
-                String msg = annotationDetail.getValue() + " is not found at : " + startIndex + "-" + endIndex + ",  and the found value is : " + actualValue;
-                throw new Exception(msg);
             }
+            matcher = pattern.matcher(annotatedData);
+            String mainHTML = matcher.replaceAll(regExpToBeRemoved);
+            writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName).toString());
+            writeToCSV(annotationDetailsForCSVs, this.csvFileStorageLocation.resolve(fileName).toString());
+        } catch (Exception ex) {
             
+            logger.error("Error occurred in updateAnnotationDetailsForCSV.", ex);
         }
-        matcher = pattern.matcher(annotatedData);
-        String mainHTML = matcher.replaceAll(regExpToBeRemoved);
-        writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName).toString());
-        writeToCSV(annotationDetailsForCSVs, this.csvFileStorageLocation.resolve(fileName).toString());
     }
     
     
@@ -265,7 +271,7 @@ public class FileStorageService {
                 bw.newLine();
             }
             bw.flush();
-            bw.close();
+            //bw.close();
         } catch (Exception ex){
             logger.error("Error occurred in writeToCSV at " + csvFileName, ex);
             return false;
@@ -278,7 +284,7 @@ public class FileStorageService {
       try(FileOutputStream outputStream = new FileOutputStream(fileName)){
           byte[] strToBytes = data.getBytes();
           outputStream.write(strToBytes);
-          outputStream.close();
+         // outputStream.close();
       } catch(Exception ex) {
           logger.error("Error occurred in writeDataToFile at " + fileName, ex);
       }
