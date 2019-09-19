@@ -1,13 +1,14 @@
 package com.example.rmsservices.htmlannotator.service.service;
 
+
 import com.example.rmsservices.htmlannotator.service.exception.FileStorageException;
 import com.example.rmsservices.htmlannotator.service.exception.MyFileNotFoundException;
 import com.example.rmsservices.htmlannotator.service.mapper.DtoMapper;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsForCSV;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsFromJSON;
 import com.example.rmsservices.htmlannotator.service.property.FileStorageProperties;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -31,15 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema.Builder;
-
-
 
 @Service
 public class FileStorageService {
@@ -59,6 +51,8 @@ public class FileStorageService {
     public static final String TYPE_CSV_FILE = "csv";
     private static final String CSV_SEPARATOR = ",";
 
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
+    
     @Autowired
     public FileStorageService(FileStorageProperties fileStorageProperties) {
         this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir()).toAbsolutePath()
@@ -82,7 +76,7 @@ public class FileStorageService {
         }
     }
 
-    public String storeFile(MultipartFile file, String type) {
+    public String storeFile(MultipartFile file, String type, Boolean isAnnotated) {
         // Normalize file name
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 
@@ -98,14 +92,26 @@ public class FileStorageService {
             ArrayList<String> fileNames = null;
             switch (type) {
                 case TYPE_MAIN_FILE:
-                    fileNames = getList();
+                    fileNames = (ArrayList<String>) getList();
                     fileName = fileNames.size() + "_" + fileName;
                     targetLocation = this.fileStorageLocation
                                     .resolve(fileName).normalize();
                     break;
                 case TYPE_ANNOTATED_FILE:
-                    fileNames = getList();
-                    fileName = fileNames.size() + "_" + fileName;
+                    fileNames = (ArrayList<String>) getList();
+                    if(isAnnotated) {
+                        fileName = fileNames.size() + "_" + fileName + "_annotated";
+                        File oldFile = new File(this.annotatedFileStorageLocation
+                                        .resolve(fileName).normalize().toString()); 
+                        
+                        if(oldFile.delete()){ 
+                            logger.info("File : " + this.annotatedFileStorageLocation
+                                            .resolve(fileName).normalize().toString() + " deleted successfully"); 
+                        } 
+                    } else {
+                        fileName = fileNames.size() + "_" + fileName;
+                    }
+                    
                     targetLocation = this.annotatedFileStorageLocation
                                     .resolve(fileName).normalize();
                     break;
@@ -129,7 +135,6 @@ public class FileStorageService {
         try {
             // Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Path filePath = null;
-            ArrayList<String> fileNames = null;
             switch (type) {
                 case TYPE_MAIN_FILE:
 
@@ -144,6 +149,8 @@ public class FileStorageService {
                 case TYPE_CSV_FILE:
                     filePath = this.csvFileStorageLocation.resolve(fileName).normalize();
                     break;
+                default:
+                    throw new Exception("Type is incorrect!!!");
             }
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
@@ -152,11 +159,15 @@ public class FileStorageService {
                 throw new MyFileNotFoundException("File not found " + fileName);
             }
         } catch (MalformedURLException ex) {
-            throw new MyFileNotFoundException("File not found " + fileName, ex);
+            //throw new MyFileNotFoundException("File not found " + fileName, ex);
+            logger.error("File not found in loadFileAsResource at " + fileName, ex);
+        } catch (Exception ex) {
+            logger.error("Error occurred in loadFileAsResource at " + fileName, ex);
         }
+        return null;
     }
 
-    public ArrayList<String> getList() {
+    public List<String> getList() {
         ArrayList<String> fileNames = new ArrayList<String>();
 
         final File folder = new File(annotatedFileStorageLocation.toString());
@@ -193,7 +204,6 @@ public class FileStorageService {
                     ArrayList<AnnotationDetailsFromJSON> annotationDetails, String regExpToBeRemoved, String fileName) throws Exception {
         Pattern pattern = Pattern.compile(regExpToBeRemoved);
         Matcher matcher = null;
-        int count = 0;
         Integer diffStart = 0;
         Integer diffEnd = 0;
         ArrayList<AnnotationDetailsForCSV> annotationDetailsForCSVs = new ArrayList<>();
@@ -206,7 +216,6 @@ public class FileStorageService {
             
             if(expectedValue.equals(actualValue)) {
                 String subAnnotatedData = annotatedData.substring(0, startIndex);
-                count = 0;                
                 matcher = pattern.matcher(subAnnotatedData);
                 ArrayList<String> matches = new ArrayList<>();
                 while (matcher.find()) {
@@ -237,9 +246,9 @@ public class FileStorageService {
     
     private static Boolean writeToCSV(ArrayList<AnnotationDetailsForCSV> details, String csvFileName)
     {
-        try
+        try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFileName), "UTF-8")))
         {
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFileName), "UTF-8"));
+            
             for (AnnotationDetailsForCSV detail : details)
             {
                 StringBuffer oneLine = new StringBuffer();
@@ -257,8 +266,8 @@ public class FileStorageService {
             }
             bw.flush();
             bw.close();
-        } catch (Exception e){
-            e.printStackTrace();
+        } catch (Exception ex){
+            logger.error("Error occurred in writeToCSV at " + csvFileName, ex);
             return false;
         }
         return true;
@@ -266,20 +275,17 @@ public class FileStorageService {
     
     public void writeDataToFile(String data, String fileName) throws IOException {
       
-      FileOutputStream outputStream = new FileOutputStream(fileName);
-      byte[] strToBytes = data.getBytes();
-      outputStream.write(strToBytes);
-      outputStream.close();
+      try(FileOutputStream outputStream = new FileOutputStream(fileName)){
+          byte[] strToBytes = data.getBytes();
+          outputStream.write(strToBytes);
+          outputStream.close();
+      } catch(Exception ex) {
+          logger.error("Error occurred in writeDataToFile at " + fileName, ex);
+      }
+      
    }
 
-    private String cleanAnnotatedData(String annotatedData, String string) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    
-
-   
+       
 //    private Boolean convertJSONToCSV(String jsonFileName) throws JsonProcessingException, IOException {
 //        Path jsonFilePath = this.jsonFileStorageLocation.resolve(jsonFileName);
 //        Stream<String> jsonlines = Files.lines(jsonFilePath);

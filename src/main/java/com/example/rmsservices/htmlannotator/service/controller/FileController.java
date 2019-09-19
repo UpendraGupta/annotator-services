@@ -17,9 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,8 +35,8 @@ public class FileController {
     @PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
         
-        String fileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE);
-        fileStorageService.storeFile(file, FileStorageService.TYPE_MAIN_FILE);
+        String fileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, false);
+        fileStorageService.storeFile(file, FileStorageService.TYPE_MAIN_FILE, false);
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
                 .path(fileName)
@@ -175,8 +173,8 @@ public class FileController {
     
     @PostMapping("/save")
     public UploadFileResponse save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
-        String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE);
-        String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE);
+        String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, true);
+        String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
         // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
         // regex for annotation attribute : "data-annotate:(\\d{6})"
         fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);
@@ -190,30 +188,30 @@ public class FileController {
                 file.getContentType(), file.getSize());
     }
     
-    @GetMapping("/getFile/{fileName:.+}")
-    public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
-        Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
+//    @GetMapping("/getFile/{fileName:.+}")
+//    public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
+//        Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
+//
+//        // Try to determine file's content type
+//        String contentType = null;
+//        try {
+//            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+//        } catch (IOException ex) {
+//            logger.info("Could not determine file type.");
+//        }
+//
+//        // Fallback to the default content type if type could not be determined
+//        if(contentType == null) {
+//            contentType = "application/octet-stream";
+//        }
+//        
+//        return ResponseEntity.ok()
+//                .contentType(MediaType.parseMediaType(contentType))
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+//                .body(resource);
+//    }
 
-        // Try to determine file's content type
-        String contentType = null;
-        try {
-            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-        } catch (IOException ex) {
-            logger.info("Could not determine file type.");
-        }
-
-        // Fallback to the default content type if type could not be determined
-        if(contentType == null) {
-            contentType = "application/octet-stream";
-        }
-        
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
-    }
-
-    @GetMapping("/getJson/{fileName:.+}")
+    @GetMapping("/downloadJson/{fileName:.+}")
     public ResponseEntity<Resource> getJSON(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_JSON_FILE);
 

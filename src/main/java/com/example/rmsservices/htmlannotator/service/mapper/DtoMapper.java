@@ -3,8 +3,6 @@ package com.example.rmsservices.htmlannotator.service.mapper;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -13,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsForCSV;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsFromJSON;
+import com.example.rmsservices.htmlannotator.service.service.FileStorageService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,9 +25,7 @@ public class DtoMapper {
     private static ObjectMapper objectMapper;
 
     
-    //private static final Logger LOG = LoggerFactory.getLogger(DtoMapper.class);
-
-
+    private static final Logger logger = LoggerFactory.getLogger(DtoMapper.class);
     
     public AnnotationDetailsForCSV getAnnotationDetailsForCSV(AnnotationDetailsFromJSON annotationDetailsFromJSON, String fileName, String user, Integer diffStart, Integer diffEnd) throws Exception {
 
@@ -48,8 +45,8 @@ public class DtoMapper {
                     });
          
             return data;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            logger.error("Error occurred in getAnnotationDetailsMapFromJSON at " + jsonFilePath, ex);
         }
         return null;
     }
