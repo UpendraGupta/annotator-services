@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -179,9 +180,9 @@ public class FileStorageService {
         jsonlines.close();
         jsonData = jsonData.trim();
         //String csvData = convertJSONToCSV(jsonFileName);
-        ArrayList<AnnotationDetailsFromJSON> annotationDetails = getAnnotationDetailsListFromJSON(jsonFilePath.toString());
+        Map<String, AnnotationDetailsFromJSON> annotationDetails = DtoMapper.getAnnotationDetailsMapFromJSON(jsonFilePath.toString());
         
-        updateAnnotationDetailsForCSV(annotatedData, annotationDetails, regExpToBeRemoved, replaceWithPattern(annotatedFileName, ".html", ""));
+        updateAnnotationDetailsForCSV(annotatedData, new ArrayList<AnnotationDetailsFromJSON>(annotationDetails.values()), regExpToBeRemoved, replaceWithPattern(annotatedFileName, ".html", ""));
         //String mainData = cleanAnnotatedData(annotatedData, "");
 
     }
@@ -274,24 +275,7 @@ public class FileStorageService {
         return null;
     }
 
-    public static <T> List<T> getListOfObjectFromJsonPath(String jsonPath,
-                    TypeReference<List<T>> mapType) throws IOException {
-        byte[] jsonData = Files.readAllBytes(Paths.get(jsonPath));
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(jsonData, mapType);
-    }
-
-    public static ArrayList<AnnotationDetailsFromJSON> getAnnotationDetailsListFromJSON(String jsonFilePath) {
-        ArrayList<AnnotationDetailsFromJSON> data = null;
-        try {
-            data = (ArrayList<AnnotationDetailsFromJSON>) getListOfObjectFromJsonPath(
-                            jsonFilePath,
-                            new TypeReference<List<AnnotationDetailsFromJSON>>() {});
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return data;
-    }
+    
 
    
 //    private Boolean convertJSONToCSV(String jsonFileName) throws JsonProcessingException, IOException {

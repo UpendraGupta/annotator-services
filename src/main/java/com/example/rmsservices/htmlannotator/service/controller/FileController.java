@@ -173,10 +173,12 @@ public class FileController {
     }
     
     @PostMapping("/save")
-    public UploadFileResponse save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json) throws Exception {
+    public UploadFileResponse save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
         String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE);
         String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE);
-        fileStorageService.generateCSV(annotatedFileName, jsonFileName, "data-annotate:(\\d{6})");
+        // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
+        // regex for annotation attribute : "data-annotate:(\\d{6})"
+        fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
