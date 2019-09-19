@@ -35,6 +35,7 @@ public class FileController {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @CrossOrigin
     @PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
         
@@ -49,6 +50,7 @@ public class FileController {
                 file.getContentType(), file.getSize());
     }
 
+    @CrossOrigin
     @PostMapping("/uploadMultipleFiles")
     public ResponseEntity<List<UploadFileResponse>> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files) {
         return new ResponseEntity<List<UploadFileResponse>>(Arrays.asList(files)
@@ -57,6 +59,7 @@ public class FileController {
                         .collect(Collectors.toList()), HttpStatus.CREATED);
     }
 
+    @CrossOrigin
     @GetMapping("/downloadFile/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) {
         // Load file as Resource
@@ -81,6 +84,7 @@ public class FileController {
                 .body(resource);
     }
     
+    @CrossOrigin
     @GetMapping("/downloadFiles")
     public void downloadFiles(@RequestParam("fileNames") List<String> fileNames, HttpServletResponse response) {
         response.setContentType("application/octet-stream");
@@ -108,6 +112,7 @@ public class FileController {
         }
 
     }
+    @CrossOrigin
     @GetMapping("/downloadCSV/{fileName:.+}")
     public ResponseEntity<Resource> downloadCSV(@PathVariable String fileName, HttpServletRequest request) {
         // Load file as Resource
@@ -132,6 +137,7 @@ public class FileController {
                 .body(resource);
     }
     
+    @CrossOrigin
     @GetMapping("/downloadCSVs")
     public void downloadCSVs(@RequestParam("fileNames") List<String> fileNames, HttpServletResponse response) {
         response.setContentType("application/octet-stream");
@@ -160,6 +166,7 @@ public class FileController {
 
     }
     
+    @CrossOrigin
     @GetMapping("/list")
     public ResponseEntity<ArrayList<String>> getList() {
         
@@ -176,6 +183,7 @@ public class FileController {
 
     }
     
+    @CrossOrigin
     @PostMapping("/save")
     public ResponseEntity<UploadFileResponse> save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
         String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, true);
@@ -193,31 +201,32 @@ public class FileController {
                         file.getContentType(), file.getSize()), HttpStatus.OK);
         
     }
-    
-//    @GetMapping("/getFile/{fileName:.+}")
-//    public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
-//        Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
-//
-//        // Try to determine file's content type
-//        String contentType = null;
-//        try {
-//            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-//        } catch (IOException ex) {
-//            logger.info("Could not determine file type.");
-//        }
-//
-//        // Fallback to the default content type if type could not be determined
-//        if(contentType == null) {
-//            contentType = "application/octet-stream";
-//        }
-//        
-//        return ResponseEntity.ok()
-//                .contentType(MediaType.parseMediaType(contentType))
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-//                .body(resource);
-//    }
+    @CrossOrigin
+    @GetMapping("/getFile/{fileName:.+}")
+    public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
+        Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
 
-    @GetMapping("/downloadJson/{fileName:.+}")
+        // Try to determine file's content type
+        String contentType = null;
+        try {
+            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+        } catch (IOException ex) {
+            logger.info("Could not determine file type.");
+        }
+
+        // Fallback to the default content type if type could not be determined
+        if(contentType == null) {
+            contentType = "application/octet-stream";
+        }
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
+    }
+
+    @CrossOrigin
+    @GetMapping("/getJson/{fileName:.+}")
     public ResponseEntity<Resource> getJSON(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_JSON_FILE);
 
@@ -236,7 +245,6 @@ public class FileController {
         
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
 
     }
