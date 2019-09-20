@@ -218,6 +218,9 @@ public class FileController {
     @CrossOrigin
     @GetMapping("/getJson/{fileName:.+}")
     public ResponseEntity<Resource> getJSON(@PathVariable String fileName, HttpServletRequest request) {
+        fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
+        fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.TYPE_HTML, FileStorageService.TYPE_JSON);
+        
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_JSON_FILE);
 
         // Try to determine file's content type
