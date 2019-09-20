@@ -1,11 +1,7 @@
 package com.example.rmsservices.htmlannotator.service.controller;
 
 import com.example.rmsservices.htmlannotator.service.payload.UploadFileResponse;
-import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsFromJSON;
 import com.example.rmsservices.htmlannotator.service.service.FileStorageService;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
-import org.apache.tomcat.util.json.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -249,15 +245,19 @@ public class FileController {
         String jsonFileName = fileStorageService.replaceWithPattern(annotatedFileName, FileStorageService.ANNOTATED_FILE, "");
         jsonFileName = fileStorageService.replaceWithPattern(jsonFileName, FileStorageService.TYPE_HTML, "");
         jsonFileName = jsonFileName.concat(FileStorageService.TYPE_JSON);
-        Gson g = new Gson();
-        Map<String, AnnotationDetailsFromJSON> annotationDetails = g.fromJson(json, Map.class);
+        
+//        if(regexToBeRemoved.isEmpty()) {
+//            regexToBeRemoved = "\s*data-annotate=\\\"\d{9}\"";
+//        }
+//        Gson g = new Gson();
+//        Map<String, AnnotationDetailsFromJSON> annotationDetails = g.fromJson(json, Map.class);
         //Player p = g.fromJson(jsonString, Player.class)
 
 
         fileStorageService.writeDataToFile(json, fileStorageService.jsonFileStorageLocation.resolve(jsonFileName).toString());
         //String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
         // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
-        // regex for annotation attribute : "\\s*data-annotate=\\"_\\d{9}\\""
+        // regex for annotation attribute : "\\s*data-annotate=\\"_\\d{9}\\""    main   \s*data-annotate=\"_\d{9}\"
         fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
