@@ -257,7 +257,7 @@ public class FileController {
         fileStorageService.writeDataToFile(json, fileStorageService.jsonFileStorageLocation.resolve(jsonFileName).toString());
         //String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
         // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
-        // regex for annotation attribute : "data-annotate:(\\d{6})"
+        // regex for annotation attribute : "\\s*data-annotate=\\"_\\d{9}\\""
         fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()

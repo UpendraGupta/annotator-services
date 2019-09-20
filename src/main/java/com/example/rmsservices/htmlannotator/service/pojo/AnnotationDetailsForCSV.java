@@ -13,7 +13,7 @@ public class AnnotationDetailsForCSV {
         
         private String value;
         
-        private String type;
+        private String tag;
         
         private String user;
 

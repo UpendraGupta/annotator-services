@@ -215,6 +215,7 @@ public class FileStorageService {
         Matcher matcher = null;
         Integer diffStart = 0;
         Integer diffEnd = 0;
+        ;
         ArrayList<AnnotationDetailsForCSV> annotationDetailsForCSVs = new ArrayList<>();
         try {
             for(AnnotationDetailsFromJSON annotationDetail: annotationDetails) {
@@ -248,8 +249,9 @@ public class FileStorageService {
                 }
                 
             }
+            ;
             matcher = pattern.matcher(annotatedData);
-            String mainHTML = matcher.replaceAll(regExpToBeRemoved);
+            String mainHTML = matcher.replaceAll("");
             writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName + TYPE_HTML).toString());
             writeToCSV(annotationDetailsForCSVs, this.csvFileStorageLocation.resolve(fileName + TYPE_CSV).toString());
         } catch (Exception ex) {
@@ -273,7 +275,7 @@ public class FileStorageService {
                 oneLine.append(CSV_SEPARATOR);
                 oneLine.append(detail.getValue());
                 oneLine.append(CSV_SEPARATOR);
-                oneLine.append(detail.getType());
+                oneLine.append(detail.getTag());
                 oneLine.append(CSV_SEPARATOR);
                 oneLine.append(detail.getUser());
                 bw.write(oneLine.toString());
