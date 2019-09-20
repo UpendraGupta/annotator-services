@@ -50,6 +50,10 @@ public class FileStorageService {
     public static final String TYPE_JSON_FILE = "json";
     public static final String TYPE_CSV_FILE = "csv";
     private static final String CSV_SEPARATOR = ",";
+    public static final String ANNOTATED_FILE = "annotated_";
+    public static final String TYPE_CSV = ".csv";
+    public static final String TYPE_JSON = ".json";
+    public static final String TYPE_HTML = ".html";
 
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
     
@@ -107,7 +111,7 @@ public class FileStorageService {
                             logger.info("File : " + this.annotatedFileStorageLocation
                                             .resolve(fileName).normalize().toString() + " deleted successfully"); 
                         }
-                        fileName = "annotated" + "_" + fileNames.size() + "_" + fileName;
+                        fileName = ANNOTATED_FILE + fileNames.size() + "_" + fileName;
                         
                     } else {
                         fileName = fileNames.size() + "_" + fileName;
@@ -194,8 +198,9 @@ public class FileStorageService {
 //        jsonData = jsonData.trim();
         //String csvData = convertJSONToCSV(jsonFileName);
         Map<String, AnnotationDetailsFromJSON> annotationDetails = DtoMapper.getAnnotationDetailsMapFromJSON(jsonFilePath.toString());
-        
-        updateAnnotationDetailsForCSV(annotatedData, new ArrayList<AnnotationDetailsFromJSON>(annotationDetails.values()), regExpToBeRemoved, replaceWithPattern(annotatedFileName, ".html", ""));
+        String fileName = replaceWithPattern(annotatedFileName, FileStorageService.ANNOTATED_FILE, "");
+        fileName = replaceWithPattern(fileName, TYPE_HTML, "");
+        updateAnnotationDetailsForCSV(annotatedData, new ArrayList<AnnotationDetailsFromJSON>(annotationDetails.values()), regExpToBeRemoved, fileName);
         
 
     }
@@ -241,8 +246,8 @@ public class FileStorageService {
             }
             matcher = pattern.matcher(annotatedData);
             String mainHTML = matcher.replaceAll(regExpToBeRemoved);
-            writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName).toString());
-            writeToCSV(annotationDetailsForCSVs, this.csvFileStorageLocation.resolve(fileName).toString());
+            writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName + TYPE_HTML).toString());
+            writeToCSV(annotationDetailsForCSVs, this.csvFileStorageLocation.resolve(fileName + TYPE_CSV).toString());
         } catch (Exception ex) {
             
             logger.error("Error occurred in updateAnnotationDetailsForCSV.", ex);

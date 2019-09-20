@@ -62,8 +62,9 @@ public class FileController {
     @CrossOrigin
     @GetMapping("/downloadFile/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) {
+        fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
         // Load file as Resource
-        Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
+        Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_MAIN_FILE);
 
         // Try to determine file's content type
         String contentType = null;
@@ -93,7 +94,8 @@ public class FileController {
         
         try (ZipOutputStream zippedOut = new ZipOutputStream(response.getOutputStream())) {
             for(String fileName:fileNames) {
-                FileSystemResource resource = new FileSystemResource(fileStorageService.annotatedFileStorageLocation.resolve(fileName));
+                fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
+                FileSystemResource resource = new FileSystemResource(fileStorageService.fileStorageLocation.resolve(fileName));
     
                 ZipEntry e = new ZipEntry(resource.getFilename());
                 // Configure the zip entry, the properties of the file
@@ -115,6 +117,7 @@ public class FileController {
     @CrossOrigin
     @GetMapping("/downloadCSV/{fileName:.+}")
     public ResponseEntity<Resource> downloadCSV(@PathVariable String fileName, HttpServletRequest request) {
+        fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
         // Load file as Resource
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_CSV_FILE);
 
@@ -146,6 +149,7 @@ public class FileController {
         
         try (ZipOutputStream zippedOut = new ZipOutputStream(response.getOutputStream())) {
             for(String fileName:fileNames) {
+                fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
                 FileSystemResource resource = new FileSystemResource(fileStorageService.csvFileStorageLocation.resolve(fileName));
     
                 ZipEntry e = new ZipEntry(resource.getFilename());
@@ -184,24 +188,6 @@ public class FileController {
     }
     
     @CrossOrigin
-    @PostMapping("/save")
-    public ResponseEntity<UploadFileResponse> save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
-        String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, true);
-        String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
-        // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
-        // regex for annotation attribute : "data-annotate:(\\d{6})"
-        fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);
-
-        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/downloadFile/")
-                .path(annotatedFileName)
-                .toUriString();
-        
-        return new ResponseEntity<UploadFileResponse>(new UploadFileResponse(annotatedFileName, fileDownloadUri,
-                        file.getContentType(), file.getSize()), HttpStatus.OK);
-        
-    }
-    @CrossOrigin
     @GetMapping("/getFile/{fileName:.+}")
     public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
@@ -221,7 +207,6 @@ public class FileController {
         
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
     }
 
@@ -247,6 +232,25 @@ public class FileController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
 
+    }
+    
+    @CrossOrigin
+    @PostMapping("/save")
+    public ResponseEntity<UploadFileResponse> save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
+        String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, true);
+        String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
+        // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
+        // regex for annotation attribute : "data-annotate:(\\d{6})"
+        fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);
+
+        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/downloadFile/")
+                .path(annotatedFileName)
+                .toUriString();
+        
+        return new ResponseEntity<UploadFileResponse>(new UploadFileResponse(annotatedFileName, fileDownloadUri,
+                        file.getContentType(), file.getSize()), HttpStatus.OK);
+        
     }
 
 }
