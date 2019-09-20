@@ -17,15 +17,5 @@ public class AnnotationDetailsForCSV {
         
         private String user;
 
-        public AnnotationDetailsForCSV(String document, String position, String value, String type,
-                        String user) {
-            super();
-            this.document = document;
-            this.position = position;
-            this.value = value;
-            this.type = type;
-            this.user = user;
-        }
-                
 }
 

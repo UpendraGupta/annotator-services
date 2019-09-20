@@ -1,7 +1,11 @@
 package com.example.rmsservices.htmlannotator.service.controller;
 
 import com.example.rmsservices.htmlannotator.service.payload.UploadFileResponse;
+import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsFromJSON;
 import com.example.rmsservices.htmlannotator.service.service.FileStorageService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.gson.Gson;
+import org.apache.tomcat.util.json.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -236,9 +241,18 @@ public class FileController {
     
     @CrossOrigin
     @PostMapping("/save")
-    public ResponseEntity<UploadFileResponse> save(@RequestParam("file") MultipartFile file, @RequestParam("json") MultipartFile json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
+    public ResponseEntity<UploadFileResponse> save(@RequestParam("file") MultipartFile file, @RequestParam("json") String json, @RequestParam("regexToBeRemoved") String regexToBeRemoved) throws Exception {
         String annotatedFileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, true);
-        String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
+        String jsonFileName = fileStorageService.replaceWithPattern(annotatedFileName, FileStorageService.ANNOTATED_FILE, "");
+        jsonFileName = fileStorageService.replaceWithPattern(jsonFileName, FileStorageService.TYPE_HTML, "");
+        jsonFileName = jsonFileName.concat(FileStorageService.TYPE_JSON);
+        Gson g = new Gson();
+        Map<String, AnnotationDetailsFromJSON> annotationDetails = g.fromJson(json, Map.class);
+        //Player p = g.fromJson(jsonString, Player.class)
+
+
+        fileStorageService.writeDataToFile(json, fileStorageService.jsonFileStorageLocation.resolve(jsonFileName).toString());
+        //String jsonFileName = fileStorageService.storeFile(json, FileStorageService.TYPE_JSON_FILE, false);
         // regex for tag : <\s*tag[^>]*>(.*?)<\s*/\s*tag>
         // regex for annotation attribute : "data-annotate:(\\d{6})"
         fileStorageService.generateCSV(annotatedFileName, jsonFileName, regexToBeRemoved);

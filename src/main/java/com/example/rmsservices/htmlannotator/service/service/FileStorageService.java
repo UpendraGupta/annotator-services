@@ -7,6 +7,7 @@ import com.example.rmsservices.htmlannotator.service.mapper.DtoMapper;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsForCSV;
 import com.example.rmsservices.htmlannotator.service.pojo.AnnotationDetailsFromJSON;
 import com.example.rmsservices.htmlannotator.service.property.FileStorageProperties;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,7 +112,10 @@ public class FileStorageService {
                             logger.info("File : " + this.annotatedFileStorageLocation
                                             .resolve(fileName).normalize().toString() + " deleted successfully"); 
                         }
-                        fileName = ANNOTATED_FILE + fileNames.size() + "_" + fileName;
+                        if(fileName.indexOf(ANNOTATED_FILE) != -1) {
+                            fileName = ANNOTATED_FILE + fileNames.size() + "_" + fileName;
+                        }
+                        
                         
                     } else {
                         fileName = fileNames.size() + "_" + fileName;
@@ -197,7 +201,7 @@ public class FileStorageService {
 //        jsonlines.close();
 //        jsonData = jsonData.trim();
         //String csvData = convertJSONToCSV(jsonFileName);
-        Map<String, AnnotationDetailsFromJSON> annotationDetails = DtoMapper.getAnnotationDetailsMapFromJSON(jsonFilePath.toString());
+        Map<String, AnnotationDetailsFromJSON> annotationDetails = DtoMapper.getMapFromJsonPath(jsonFilePath.toString(), new TypeReference<Map<String, AnnotationDetailsFromJSON>>() {});
         String fileName = replaceWithPattern(annotatedFileName, FileStorageService.ANNOTATED_FILE, "");
         fileName = replaceWithPattern(fileName, TYPE_HTML, "");
         updateAnnotationDetailsForCSV(annotatedData, new ArrayList<AnnotationDetailsFromJSON>(annotationDetails.values()), regExpToBeRemoved, fileName);
@@ -218,9 +222,9 @@ public class FileStorageService {
                 //String[] positions = annotationDetail.getPosition().split("-");
                 Integer startIndex = annotationDetail.getStart();
                 Integer endIndex = annotationDetail.getEnd();
-                String actualValue = annotatedData.substring(startIndex, endIndex+1);
+                String actualValue = annotatedData.substring(startIndex, endIndex);
                 
-                if(expectedValue.equals(actualValue)) {
+                if(expectedValue.compareTo(actualValue) == 0) {
                     String subAnnotatedData = annotatedData.substring(0, startIndex);
                     matcher = pattern.matcher(subAnnotatedData);
                     ArrayList<String> matches = new ArrayList<>();
