@@ -112,8 +112,8 @@ public class FileStorageService {
                             logger.info("File : " + this.annotatedFileStorageLocation
                                             .resolve(fileName).normalize().toString() + " deleted successfully"); 
                         }
-                        if(fileName.indexOf(ANNOTATED_FILE) != -1) {
-                            fileName = ANNOTATED_FILE + fileNames.size() + "_" + fileName;
+                        if(fileName.indexOf(ANNOTATED_FILE) == -1) {
+                            fileName = ANNOTATED_FILE + fileName;
                         }
                         
                         
