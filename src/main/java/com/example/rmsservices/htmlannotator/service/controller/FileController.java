@@ -119,6 +119,8 @@ public class FileController {
     @GetMapping("/downloadCSV/{fileName:.+}")
     public ResponseEntity<Resource> downloadCSV(@PathVariable String fileName, HttpServletRequest request) {
         fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
+        fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.TYPE_HTML,FileStorageService.TYPE_CSV);
+        
         // Load file as Resource
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_CSV_FILE);
 
