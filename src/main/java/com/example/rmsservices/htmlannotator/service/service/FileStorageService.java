@@ -346,44 +346,6 @@ public class FileStorageService {
       
    }
 
-       
-//    private Boolean convertJSONToCSV(String jsonFileName) throws JsonProcessingException, IOException {
-//        Path jsonFilePath = this.jsonFileStorageLocation.resolve(jsonFileName);
-//        Stream<String> jsonlines = Files.lines(jsonFilePath);
-//        String jsonData = jsonlines.collect(Collectors.joining("\n"));
-//        jsonlines.close();
-//        jsonData = jsonData.trim();
-//        ObjectMapper mapper = new ObjectMapper();
-////        ArrayList<AnnotationDetailsForCSV> emp = mapper.readValue(jsonData, ArrayList<AnnotationDetailsForCSV>.class);
-////        mapper.re
-//        try{
-//            JsonNode jsonTree = new ObjectMapper().readTree(new File((this.jsonFileStorageLocation.resolve(jsonFileName)).toString()));
-//        
-//            Builder csvSchemaBuilder = CsvSchema.builder();
-//            JsonNode firstObject = jsonTree.elements().next();
-//            firstObject.fieldNames().forEachRemaining(fieldName -> {csvSchemaBuilder.addColumn(fieldName);} );
-//            //CsvSchema csvSchema = csvSchemaBuilder.build().withHeader();
-//            CsvMapper csvMapper = new CsvMapper();
-//            CsvSchema csvSchema = csvMapper
-//                            .schemaFor(AnnotationDetailsFromJSON.class)
-//                            .withHeader(); 
-//            String csvFileName = replaceWithPattern(jsonFileName, ".json", ".csv");
-//            csvMapper.writerFor(JsonNode.class)
-//              .with(csvSchema)
-//              .writeValue(new File((this.csvFileStorageLocation.resolve(csvFileName)).toString()), jsonTree);
-//            
-//            Stream<String> csvLines = Files.lines(this.csvFileStorageLocation.resolve(csvFileName));
-//            ArrayList<String> csvArrs = (ArrayList<String>) csvLines.collect(Collectors.toList());
-//            for (String csvRow: csvArrs) {
-//                
-//                
-//            }
-//            return true;
-//            
-//        } catch(Exception exception) {
-//            return false;
-//        }
-//    }
 
     public String replaceWithPattern(String str, String regExp, String replace) {
         Pattern ptn = Pattern.compile(regExp);// "\\s+");
