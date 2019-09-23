@@ -239,6 +239,9 @@ public class FileStorageService {
                         matches.add(matcher.group(0));
                     }
                     diffEnd = String.join("", matches).length();
+                    
+                    matcher = pattern.matcher(annotationDetail.getValue());
+                    annotationDetail.setValue(matcher.replaceAll(""));
                     annotationDetailsForCSVs.add(dtoMapper.getAnnotationDetailsForCSV(annotationDetail, fileName, "User_1", diffStart, diffEnd));
                     
                     
@@ -249,7 +252,7 @@ public class FileStorageService {
                 }
                 
             }
-            ;
+            
             matcher = pattern.matcher(annotatedData);
             String mainHTML = matcher.replaceAll("");
             writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName + TYPE_HTML).toString());

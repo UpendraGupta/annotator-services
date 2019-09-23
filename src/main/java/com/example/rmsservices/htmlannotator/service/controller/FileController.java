@@ -153,6 +153,7 @@ public class FileController {
         try (ZipOutputStream zippedOut = new ZipOutputStream(response.getOutputStream())) {
             for(String fileName:fileNames) {
                 fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.ANNOTATED_FILE, "");
+                fileName = fileStorageService.replaceWithPattern(fileName, FileStorageService.TYPE_HTML,FileStorageService.TYPE_CSV);
                 FileSystemResource resource = new FileSystemResource(fileStorageService.csvFileStorageLocation.resolve(fileName));
     
                 ZipEntry e = new ZipEntry(resource.getFilename());
