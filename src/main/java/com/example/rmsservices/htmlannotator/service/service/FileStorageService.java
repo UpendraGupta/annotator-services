@@ -20,12 +20,16 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -191,22 +195,22 @@ public class FileStorageService {
         Path annotatedFilePath = this.annotatedFileStorageLocation.resolve(annotatedFileName);
         Path jsonFilePath = this.jsonFileStorageLocation.resolve(jsonFileName);
 
-        Stream<String> annotatedlines = Files.lines(annotatedFilePath);
-        String annotatedData = annotatedlines.collect(Collectors.joining("\n"));
-        annotatedlines.close();
-        annotatedData = annotatedData.trim();
+        String annotatedData = getDataFromFilePath(annotatedFilePath);
 
-//        Stream<String> jsonlines = Files.lines(jsonFilePath);
-//        String jsonData = jsonlines.collect(Collectors.joining("\n"));
-//        jsonlines.close();
-//        jsonData = jsonData.trim();
-        //String csvData = convertJSONToCSV(jsonFileName);
         Map<String, AnnotationDetailsFromJSON> annotationDetails = DtoMapper.getMapFromJsonPath(jsonFilePath.toString(), new TypeReference<Map<String, AnnotationDetailsFromJSON>>() {});
         String fileName = replaceWithPattern(annotatedFileName, FileStorageService.ANNOTATED_FILE, "");
         fileName = replaceWithPattern(fileName, TYPE_HTML, "");
         updateAnnotationDetailsForCSV(annotatedData, new ArrayList<AnnotationDetailsFromJSON>(annotationDetails.values()), regExpToBeRemoved, fileName);
         
 
+    }
+    
+    private String getDataFromFilePath(Path filePath) throws IOException {
+        Stream<String> annotatedlines = Files.lines(filePath);
+        String annotatedData = annotatedlines.collect(Collectors.joining("\n"));
+        annotatedlines.close();
+        
+        return annotatedData.trim(); 
     }
 
     private void updateAnnotationDetailsForCSV(String annotatedData,
@@ -220,7 +224,6 @@ public class FileStorageService {
         try {
             for(AnnotationDetailsFromJSON annotationDetail: annotationDetails) {
                 String expectedValue = annotationDetail.getValue();
-                //String[] positions = annotationDetail.getPosition().split("-");
                 Integer startIndex = annotationDetail.getStart();
                 Integer endIndex = annotationDetail.getEnd();
                 String actualValue = annotatedData.substring(startIndex, endIndex);
@@ -252,9 +255,10 @@ public class FileStorageService {
                 }
                 
             }
-            
             matcher = pattern.matcher(annotatedData);
             String mainHTML = matcher.replaceAll("");
+            String oldData = getDataFromFilePath(this.fileStorageLocation.resolve(fileName + TYPE_HTML));
+            checkMd5SumForOldAndNewFile(oldData, mainHTML.trim());
             writeDataToFile(mainHTML, this.fileStorageLocation.resolve(fileName + TYPE_HTML).toString());
             writeToCSV(annotationDetailsForCSVs, this.csvFileStorageLocation.resolve(fileName + TYPE_CSV).toString());
         } catch (Exception ex) {
@@ -264,6 +268,43 @@ public class FileStorageService {
     }
     
     
+    private void checkMd5SumForOldAndNewFile(String oldData, String newData) throws Exception {
+         
+        String oldMd5Sum = getMd5Sum(oldData);
+        String newMd5Sum = getMd5Sum(newData);
+        
+        if(!newMd5Sum.equals(oldMd5Sum)) {
+            logger.error("OLD Resume Data. : ############################{}############################", oldData);
+            logger.error("NEW Resume Data. : ############################{}############################", newData);
+            throw new Exception("Old and New Md5Sums are not same. Please have a look");
+            
+        }
+    }
+    
+
+    private String getMd5Sum(String input) {
+        try { 
+            MessageDigest md = MessageDigest.getInstance("MD5"); 
+  
+            // digest() method is called to calculate message digest 
+            //  of an input digest() return array of byte 
+            byte[] messageDigest = md.digest(input.getBytes()); 
+  
+            // Convert byte array into signum representation 
+            BigInteger no = new BigInteger(1, messageDigest); 
+  
+            // Convert message digest into hex value 
+            String hashtext = no.toString(16); 
+            while (hashtext.length() < 32) { 
+                hashtext = "0" + hashtext; 
+            } 
+            return hashtext; 
+        } catch (NoSuchAlgorithmException e) { 
+            throw new RuntimeException(e); 
+        } 
+        
+    }
+
     private static Boolean writeToCSV(ArrayList<AnnotationDetailsForCSV> details, String csvFileName)
     {
         try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFileName), "UTF-8")))
