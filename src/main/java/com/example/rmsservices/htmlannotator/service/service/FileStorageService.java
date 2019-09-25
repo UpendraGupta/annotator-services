@@ -392,14 +392,14 @@ public class FileStorageService {
         String patternStr = "(<\\s*[a-zA-Z]+)";
         Pattern pattern = Pattern.compile(patternStr);    
         Matcher matcher = null;    
-        String newData = null;
+        String newData = "";
         matcher = pattern.matcher(data);
         while (matcher.find()) {    
             
             //attributeId = (int)rand.nextDouble() * 1000000000; 
-            matcher.group(0);
+            //matcher.group(0);
             attributeId = 1000000000 + x++;
-            newData = newData + insertString(data.substring(0, matcher.end()), " data-annotate=_" + attributeId, matcher.end());
+            newData = newData + insertString(data.substring(0, matcher.end()), " data-annotate=\"_" + attributeId + "\"", matcher.end());
             data = data.substring(matcher.end(), data.length());
             matcher = pattern.matcher(data);
         }    
