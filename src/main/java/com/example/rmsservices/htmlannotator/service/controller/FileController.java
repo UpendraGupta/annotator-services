@@ -45,7 +45,7 @@ public class FileController {
         String fileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, false);
         String data = fileStorageService.getDataFromFilePath(fileStorageService.annotatedFileStorageLocation.resolve(fileName));
         data = fileStorageService.addAttributeToHTMLTags(data);
-        fileStorageService.writeDataToFile(data, fileName);
+        fileStorageService.writeDataToFile(data, fileStorageService.annotatedFileStorageLocation.resolve(fileName).toString());
         fileStorageService.storeFile(file, FileStorageService.TYPE_MAIN_FILE, false);
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
