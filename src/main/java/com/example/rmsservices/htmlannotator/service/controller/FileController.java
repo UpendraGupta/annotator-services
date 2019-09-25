@@ -2,6 +2,7 @@ package com.example.rmsservices.htmlannotator.service.controller;
 
 import com.example.rmsservices.htmlannotator.service.payload.UploadFileResponse;
 import com.example.rmsservices.htmlannotator.service.service.FileStorageService;
+import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,9 +40,12 @@ public class FileController {
 
     @CrossOrigin
     @PostMapping("/uploadFile")
-    public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
+    public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
         
         String fileName = fileStorageService.storeFile(file, FileStorageService.TYPE_ANNOTATED_FILE, false);
+        String data = fileStorageService.getDataFromFilePath(fileStorageService.annotatedFileStorageLocation.resolve(fileName));
+        data = fileStorageService.addAttributeToHTMLTags(data);
+        fileStorageService.writeDataToFile(data, fileName);
         fileStorageService.storeFile(file, FileStorageService.TYPE_MAIN_FILE, false);
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/downloadFile/")
@@ -56,7 +61,14 @@ public class FileController {
     public ResponseEntity<List<UploadFileResponse>> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files) {
         return new ResponseEntity<List<UploadFileResponse>>(Arrays.asList(files)
                         .stream()
-                        .map(file -> uploadFile(file))
+                        .map(file -> {
+                            try {
+                                return uploadFile(file);
+                            } catch (IOException e) {
+                                logger.error("ERROR while fetching uploadMultipleFiles : ", e);
+                                return null;
+                            }
+                        })
                         .collect(Collectors.toList()), HttpStatus.CREATED);
     }
 
@@ -111,7 +123,7 @@ public class FileController {
             }
             zippedOut.finish();
         } catch (Exception e) {
-            // Exception handling goes here
+            logger.error("ERROR while fetching zipped downloadFiles", e);
         }
 
     }
@@ -169,7 +181,8 @@ public class FileController {
             }
             zippedOut.finish();
         } catch (Exception e) {
-            // Exception handling goes here
+            
+            logger.error("ERROR while fetching zipped downloadCSVs", e);
         }
 
     }
@@ -185,7 +198,7 @@ public class FileController {
             return new ResponseEntity<ArrayList<String>>(fileNames, HttpStatus.OK); 
            
         } catch (Exception e) {
-            logger.error("No Data Found while fetching list");
+            logger.error("No Data Found while fetching list", e);
         }
         return new ResponseEntity<ArrayList<String>>((ArrayList<String>)Collections.EMPTY_LIST, HttpStatus.OK);
 
@@ -193,10 +206,11 @@ public class FileController {
     
     @CrossOrigin
     @GetMapping("/getFile/{fileName:.+}")
-    public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) {
+    public ResponseEntity<Resource> getFile(@PathVariable String fileName, HttpServletRequest request) throws IOException {
         Resource resource = fileStorageService.loadFileAsResource(fileName, FileStorageService.TYPE_ANNOTATED_FILE);
-
+        
         // Try to determine file's content type
+        ///file.get
         String contentType = null;
         try {
             contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());

@@ -33,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -123,6 +124,7 @@ public class FileStorageService {
                         
                     } else {
                         fileName = fileNames.size() + "_" + fileName;
+                        
                     }
                     
                     targetLocation = this.annotatedFileStorageLocation
@@ -205,7 +207,7 @@ public class FileStorageService {
 
     }
     
-    private String getDataFromFilePath(Path filePath) throws IOException {
+    public String getDataFromFilePath(Path filePath) throws IOException {
         Stream<String> annotatedlines = Files.lines(filePath);
         String annotatedData = annotatedlines.collect(Collectors.joining("\n"));
         annotatedlines.close();
@@ -351,5 +353,39 @@ public class FileStorageService {
         Pattern ptn = Pattern.compile(regExp);// "\\s+");
         Matcher mtch = ptn.matcher(str);
         return mtch.replaceAll(replace);
+    }
+    
+    public String replaceFirstWithPattern(String str, String regExp, String replace) {
+        Pattern ptn = Pattern.compile(regExp);
+        Matcher mtch = ptn.matcher(str);
+        return mtch.replaceFirst(replace);
+    }
+    
+
+    public String addAttributeToHTMLTags(String data) {
+        //<\s*[a-z|A-Z]+\s*
+        //<\\s*[a-z|A-Z]+\\s*
+        //(<\s*[a-z|A-Z]+\s*)
+        Random rand = new Random();
+        int rand_int1 = (int)rand.nextDouble() * 1000000000; 
+        str = str.replaceAll(, "$1data-annotate:");
+        
+        String patternStr = "(<\\s*[a-z|A-Z]+\\s*)";
+        
+        while (true) {    
+            
+            Pattern pattern = Pattern.compile(patternStr);    
+            Matcher matcher = pattern.matcher(data);    
+            boolean found = false;    
+            while (matcher.find()) {    
+                System.out.println("I found the text "+matcher.group()+" starting at index "+    
+                 matcher.start()+" and ending at index "+matcher.end());    
+                found = true;    
+            }    
+            if(!found){    
+                System.out.println("No match found.");    
+            }    
+        }    
+        return null;
     }
 }
