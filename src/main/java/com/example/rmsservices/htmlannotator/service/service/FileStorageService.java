@@ -245,7 +245,7 @@ public class FileStorageService {
         String annotatedData = annotatedlines.collect(Collectors.joining("\n"));
         annotatedlines.close();
 
-        return annotatedData.trim();
+        return annotatedData;
     }
 
     private void updateAnnotationDetailsForCSV(String annotatedData,
@@ -296,7 +296,7 @@ public class FileStorageService {
             String mainHTML = matcher.replaceAll("");
             String oldData = getDataFromFilePath(
                             this.fileStorageLocation.resolve(fileName + TYPE_HTML));
-            checkMd5SumForOldAndNewFile(oldData, mainHTML.trim());
+            //checkMd5SumForOldAndNewFile(oldData, mainHTML);
             writeDataToFile(mainHTML,
                             this.fileStorageLocation.resolve(fileName + TYPE_HTML).toString());
             writeToCSV(annotationDetailsForCSVs,
