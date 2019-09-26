@@ -121,12 +121,12 @@ public class FileStorageService {
             ArrayList<String> fileNames = null;
             switch (type) {
                 case TYPE_MAIN_FILE:
-                    fileNames = (ArrayList<String>) getList();
+                    fileNames = (ArrayList<String>) getList(TYPE_MAIN_FILE);
                     fileName = fileNames.size() + "_" + fileName;
                     targetLocation = this.fileStorageLocation.resolve(fileName).normalize();
                     break;
                 case TYPE_ANNOTATED_FILE:
-                    fileNames = (ArrayList<String>) getList();
+                    fileNames = (ArrayList<String>) getList(TYPE_ANNOTATED_FILE);
                     if (isAnnotated) {
                         File oldFile = new File(this.annotatedFileStorageLocation.resolve(fileName)
                                         .normalize().toString());
@@ -164,6 +164,42 @@ public class FileStorageService {
             throw new FileStorageException(
                             "Could not store file " + fileName + ". Please try again!", ex);
         }
+    }
+    public Path getStorageLocation(String type) {
+        switch (type) {
+            case TYPE_MAIN_FILE:
+
+                return this.fileStorageLocation;
+                
+            case TYPE_ANNOTATED_FILE:
+                return this.annotatedFileStorageLocation;
+                
+            case TYPE_JSON_FILE:
+                return this.jsonFileStorageLocation;
+                
+            case TYPE_CSV_FILE:
+                return this.csvFileStorageLocation;
+                
+            default:
+                return null;
+        }
+    }
+
+    private ArrayList<String> getList(String typeAnnotatedFile) {
+        ArrayList<String> fileNames = new ArrayList<>();
+
+        final File folder = new File(getStorageLocation(typeAnnotatedFile).toString());
+        File[] files = folder.listFiles();
+        Arrays.sort(files, new Comparator<File>(){
+            public int compare(File f1, File f2)
+            {
+                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+            } });
+        for (final File fileEntry : files) {
+               fileNames.add(fileEntry.getName());
+        }
+        logger.info(fileNames.toString());
+        return fileNames;
     }
 
     public Resource loadFileAsResource(String fileName, String type) {
