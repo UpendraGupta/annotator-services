@@ -22,8 +22,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -88,6 +90,21 @@ public class FileStorageService {
         }
     }
 
+    public static String decodeFileName(String fileName)  
+    {  
+              try {  
+                   String prevURL="";  
+                   String decodeURL=fileName;  
+                   while(!prevURL.equals(decodeURL))  
+                   {  
+                        prevURL=decodeURL;  
+                        decodeURL=URLDecoder.decode( decodeURL, "UTF-8" );  
+                   }  
+                   return decodeURL;  
+              } catch (UnsupportedEncodingException e) {  
+                   return "Issue while decoding" +e.getMessage();  
+              }  
+    }
     public String storeFile(MultipartFile file, String type, Boolean isAnnotated) {
         // Normalize file name
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
@@ -151,6 +168,7 @@ public class FileStorageService {
 
     public Resource loadFileAsResource(String fileName, String type) {
         try {
+            fileName = decodeFileName(fileName);
             // Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Path filePath = null;
             switch (type) {
