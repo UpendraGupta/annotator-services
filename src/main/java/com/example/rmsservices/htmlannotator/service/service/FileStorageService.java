@@ -424,7 +424,7 @@ public class FileStorageService {
             
             //attributeId = (int)rand.nextDouble() * 1000000000; 
             //matcher.group(0);
-            attributeId = 1000000000 + x++;
+            attributeId = 100000000 + x++;
             newData = newData + insertString(data.substring(0, matcher.end()), " data-annotate=\"_" + attributeId + "\"", matcher.end());
             data = data.substring(matcher.end(), data.length());
             matcher = pattern.matcher(data);
