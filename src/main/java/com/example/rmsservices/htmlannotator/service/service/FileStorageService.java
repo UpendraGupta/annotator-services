@@ -31,6 +31,8 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -187,8 +189,14 @@ public class FileStorageService {
         ArrayList<String> fileNames = new ArrayList<>();
 
         final File folder = new File(annotatedFileStorageLocation.toString());
-        for (final File fileEntry : folder.listFiles()) {
-            fileNames.add(fileEntry.getName());
+        File[] files = folder.listFiles();
+        Arrays.sort(files, new Comparator<File>(){
+            public int compare(File f1, File f2)
+            {
+                return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+            } });
+        for (final File fileEntry : files) {
+               fileNames.add(fileEntry.getName());
         }
         logger.info(fileNames.toString());
         return fileNames;

@@ -194,7 +194,7 @@ public class FileController {
         try {
             
             ArrayList<String> fileNames = (ArrayList<String>)fileStorageService.getList();
-            Collections.sort(fileNames, Collections.reverseOrder());
+            
             return new ResponseEntity<ArrayList<String>>(fileNames, HttpStatus.OK); 
            
         } catch (Exception e) {
